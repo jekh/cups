@@ -1,0 +1,52 @@
+name: Build arm64 .deb
+
+on:
+  workflow_dispatch:
+
+jobs:
+  build-arm64-deb:
+    runs-on: ubuntu-24.04-arm
+
+    steps:
+    - name: Checkout CUPS sources
+      uses: actions/checkout@v6
+
+    - name: Install build dependencies
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y \
+          build-essential \
+          autoconf \
+          avahi-daemon \
+          libavahi-client-dev \
+          libssl-dev \
+          libpam-dev \
+          libusb-1.0-0-dev \
+          zlib1g-dev \
+          pkg-config \
+          checkinstall
+
+    - name: Configure CUPS
+      run: ./configure --prefix=/usr --sysconfdir=/etc --localstatedir=/var
+
+    - name: Build CUPS
+      run: make -j$(nproc)
+
+    - name: Create .deb package
+      run: |
+        sudo checkinstall --pkgname=cups-custom \
+          --pkgversion=$(grep CUPS_VERSION config.h | head -1 | cut -d'"' -f2) \
+          --pkgrelease=1~arm64 \
+          --arch=arm64 \
+          --requires='libavahi-client3,libssl3t64,libpam0g,libusb-1.0-0,zlib1g' \
+          --maintainer='jekh' \
+          --nodoc \
+          --default \
+          --install=no \
+          make install BUILDROOT=$PWD/install-root
+
+    - name: Upload .deb artifact
+      uses: actions/upload-artifact@v7
+      with:
+        name: cups-arm64-deb
+        path: "*.deb"
