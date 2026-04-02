@@ -39,6 +39,9 @@ jobs:
           --pkgrelease=1 \
           --arch=arm64 \
           --requires='libavahi-client3,libssl3t64,libpam0g,libusb-1.0-0,zlib1g' \
+          --conflicts='cups' \
+          --replaces='cups' \
+          --provides='cups' \
           --maintainer='jekh' \
           --nodoc \
           --default \
