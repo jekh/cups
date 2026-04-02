@@ -34,19 +34,27 @@ jobs:
 
     - name: Create .deb package
       run: |
+        CUPS_VERSION=$(grep 'define CUPS_VERSION ' config.h | cut -d'"' -f2)
         sudo checkinstall --pkgname=cups-custom \
-          --pkgversion=$(grep CUPS_VERSION config.h | head -1 | cut -d'"' -f2) \
-          --pkgrelease=1~arm64 \
+          --pkgversion="$CUPS_VERSION" \
+          --pkgrelease=1 \
           --arch=arm64 \
           --requires='libavahi-client3,libssl3t64,libpam0g,libusb-1.0-0,zlib1g' \
           --maintainer='jekh' \
           --nodoc \
           --default \
-          --install=no \
-          make install BUILDROOT=$PWD/install-root
+          --fstrans=no \
+          make install
+        echo "=== .deb files ==="
+        find / -name "cups-custom*.deb" -type f 2>/dev/null
+        ls -la *.deb 2>/dev/null || true
+        ls -la /root/*.deb 2>/dev/null || true
 
     - name: Upload .deb artifact
       uses: actions/upload-artifact@v7
       with:
         name: cups-arm64-deb
-        path: "*.deb"
+        path: |
+          *.deb
+          /root/*.deb
+        if-no-files-found: error
